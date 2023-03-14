@@ -88,7 +88,7 @@ const inputClosePin = document.querySelector('.form__input--pin');
 
 ////////////////////////////////////////////
 // Functions
-const formatMovementDate = function (date) {
+const formatMovementDate = function (date, locale) {
   const calcDaysPassed = (day1, day2) =>
     Math.round(Math.abs(day2 - day1) / (1000 * 60 * 60 * 24));
 
@@ -98,10 +98,7 @@ const formatMovementDate = function (date) {
   if (dayPassed === 1) return 'Yesterday';
   if (dayPassed <= 7) return `${dayPassed} days ago`;
   else {
-    const day = `${date.getDate()}`.padStart(2, 0);
-    const month = `${date.getMonth() + 1}`.padStart(2, 0);
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
+    return Intl.DateTimeFormat(locale).format(date);
   }
 };
 
@@ -118,7 +115,7 @@ const displayMovements = function (acc, sort = false) {
 
     const date = new Date(acc.movementsDates[i]); //this will use the looped i of movs and use it to loop a different array at the same time
 
-    const displayDate = formatMovementDate(date);
+    const displayDate = formatMovementDate(date, acc.locale);
     const html = `
       <div class="movements__row">
         <div class="movements__type movements__type--${type}">${
@@ -204,14 +201,23 @@ btnLogin.addEventListener('click', function (e) {
     }`;
     //make the content visible
     containerApp.style.opacity = 100;
+
     // Create current date and time
     const now = new Date();
-    const day = `${now.getDate()}`.padStart(2, 0);
-    const month = `${now.getMonth() + 1}`.padStart(2, 0);
-    const year = now.getFullYear();
-    const hour = `${now.getHours()}`.padStart(2, 0);
-    const minute = `${now.getMinutes()}`.padStart(2, 0);
-    labelDate.textContent = `${day}/${month}/${year}, ${hour}:${minute}`;
+    const options = {
+      hour: 'numeric',
+      minute: 'numeric',
+      day: 'numeric',
+      month: 'numeric',
+      year: 'numeric',
+      //weekday: 'long',
+    };
+    //const locale = navigator.language;
+
+    labelDate.textContent = new Intl.DateTimeFormat(
+      currentAccount.locale,
+      options
+    ).format(now);
     //clear input fields
     inputLoginUsername.value = inputLoginPin.value = '';
     inputLoginPin.blur();
@@ -252,7 +258,7 @@ btnTransfer.addEventListener('click', function (e) {
   console.log(currentAccount.balance);
 });
 
-//////LOANS
+///////////////LOANS
 btnLoan.addEventListener('click', function (e) {
   e.preventDefault();
   const amount = +inputLoanAmount.value;
@@ -266,7 +272,7 @@ btnLoan.addEventListener('click', function (e) {
   inputLoanAmount.value = '';
 });
 //
-//CLOSE ACCOUNT
+///////////////CLOSE ACCOUNT
 btnClose.addEventListener('click', function (e) {
   e.preventDefault();
 
@@ -288,7 +294,7 @@ btnClose.addEventListener('click', function (e) {
   }
   inputCloseUsername.value = inputClosePin.value = '';
 });
-
+///////////SORT BUTTON
 let sorted = false;
 btnSort.addEventListener('click', function (e) {
   e.preventDefault();
