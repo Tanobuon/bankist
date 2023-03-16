@@ -194,10 +194,37 @@ const updateUI = function (acc) {
   calcDisplaySummary(acc);
 };
 
+// Logout timer
+const startLogOutTimer = function () {
+  const tick = function () {
+    const min = String(Math.trunc(time / 60)).padStart(2, 0);
+    const sec = String(time % 60).padStart(2, 0);
+    // In each call, print the remaining time to UI
+    labelTimer.textContent = `${min}:${sec}`;
+
+    // When 0 seconds, stop timer and logout user
+
+    if (time === 0) {
+      clearInterval(timer);
+      labelWelcome.textContent = `Log in to get started`;
+      containerApp.style.opacity = 0;
+    }
+    // Decrease timer
+    time--;
+  };
+  // Set timer to 5 minutes
+  let time = 30;
+  // Call the timer every second
+  tick();
+  const timer = setInterval(tick, 1000);
+  return timer;
+};
+
 //Event handler
 
 /////////LOGIN USERNAME PASSWORD VALIDATION
-let currentAccount;
+let currentAccount, timer;
+
 btnLogin.addEventListener('click', function (e) {
   //prevent form from submitting
   e.preventDefault();
@@ -221,9 +248,7 @@ btnLogin.addEventListener('click', function (e) {
       day: 'numeric',
       month: 'numeric',
       year: 'numeric',
-      //weekday: 'long',
     };
-    //const locale = navigator.language;
 
     labelDate.textContent = new Intl.DateTimeFormat(
       currentAccount.locale,
@@ -232,6 +257,12 @@ btnLogin.addEventListener('click', function (e) {
     //clear input fields
     inputLoginUsername.value = inputLoginPin.value = '';
     inputLoginPin.blur();
+
+    // Check if timer exist and reset
+    if (timer) clearInterval(timer);
+
+    timer = startLogOutTimer();
+
     //Display movements
     updateUI(currentAccount);
   }
@@ -259,26 +290,39 @@ btnTransfer.addEventListener('click', function (e) {
 
     // Update UI
     updateUI(currentAccount);
-    console.log(
-      `You succesfully transferred ${amount} to ${transferTo.username}`
-    );
-  } else {
-    alert('INVALID RECEIVER OR NOT ENOUGH FUNDS');
+
+    //Reset timer
+    clearInterval(timer);
+    timer = startLogOutTimer();
   }
-  console.log(currentAccount.movements);
-  console.log(currentAccount.balance);
 });
+//     console.log(
+//       `You succesfully transferred ${amount} to ${transferTo.username}`
+//     );
+//   } else {
+//     alert('INVALID RECEIVER OR NOT ENOUGH FUNDS');
+//   }
+//   console.log(currentAccount.movements);
+//   console.log(currentAccount.balance);
+// });
 
 ///////////////LOANS
 btnLoan.addEventListener('click', function (e) {
   e.preventDefault();
   const amount = +inputLoanAmount.value;
-  if (amount > 0 && currentAccount.movements.some(mov => mov * 0.1 >= amount)) {
-    // Add movement
-    currentAccount.movements.push(amount);
-    //Add loan date
-    currentAccount.movementsDates.push(new Date().toISOString());
-    updateUI(currentAccount);
+  if (amount > 0 && currentAccount.movements.some(mov => mov >= amount * 0.1)) {
+    setTimeout(function () {
+      // Add movement
+      currentAccount.movements.push(amount);
+      //Add loan date
+      currentAccount.movementsDates.push(new Date().toISOString());
+      // Update UI
+      updateUI(currentAccount);
+
+      //Reset timer
+      clearInterval(timer);
+      timer = startLogOutTimer();
+    }, 2500);
   }
   inputLoanAmount.value = '';
 });
